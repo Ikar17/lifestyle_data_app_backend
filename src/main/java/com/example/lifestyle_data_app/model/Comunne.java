@@ -15,6 +15,8 @@ public class Comunne {
     @Id
     private Integer id;
     private String name;
+    private Float lan;
+    private Float lon;
     @ManyToOne
     private District district;
 }

@@ -22,7 +22,5 @@ public class Address {
     private District district;
     @ManyToOne
     private Comunne comunne;
-    @ManyToOne
-    private MeasuringStation measuringStation;
 
 }

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,10 +17,11 @@ public class User {
     @Id
     @GeneratedValue
     private Long id;
-    private Long uid;
-    private String name;
+    private String uid;
     private String surname;
     private String email;
+    private String name;
+    private LocalDateTime birthDate;
     @Enumerated(EnumType.STRING)
     private Role role;
     @ManyToOne
