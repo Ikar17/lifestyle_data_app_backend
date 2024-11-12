@@ -48,7 +48,7 @@ public class AddressService {
             address.setDistrict(district);
             address.setComunne(comunne);
 
-            return address;
+            return addressRepository.save(address);
         }catch(Exception e){
             System.out.println(e.getMessage());
             return null;

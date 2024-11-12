@@ -19,8 +19,8 @@ public class AuthController {
     public ResponseEntity<User> signUp(@RequestBody SignUpDTO signUpDTO){
         try{
             User user = authService.addUser(signUpDTO);
-            if(user == null) new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
-
+            if(user == null) return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+            System.out.println("New user: " + user);
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         }catch(Exception e){
             System.out.println(e.getMessage());
