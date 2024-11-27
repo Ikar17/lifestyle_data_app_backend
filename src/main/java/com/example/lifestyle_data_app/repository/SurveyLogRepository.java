@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface SurveyLogRepository extends JpaRepository<SurveyLog, Long> {
     List<SurveyLog> findAllByUser(User user);
+    List<SurveyLog> findAllBySurvey_Id(Long surveyId);
 }

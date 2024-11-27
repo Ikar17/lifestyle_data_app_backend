@@ -48,6 +48,77 @@ public class SurveyService {
         }
     }
 
+    public List<SurveyMetaDataDTO> getSurveys() throws Exception{
+        User user = getUser();
+        Role userRole = user.getRole();
+
+        if(userRole.equals(Role.ADMIN)){
+            return getSurveysForAdmin();
+        }else if(userRole.equals(Role.ANALYST)){
+            return getSurveysForAnalyst(user);
+        }else{
+            return getSurveysForUser(user);
+        }
+    }
+
+    public SurveyDTO getSurveyById(Long id){
+        Optional<Survey> surveyOptional = surveyRepository.findById(id);
+        if(surveyOptional.isEmpty()) return null;
+        Survey survey = surveyOptional.get();
+
+        SurveyDTO result = new SurveyDTO();
+        result.setTitle(survey.getTitle());
+        result.setDescription(survey.getDescription());
+
+        ArrayList<SurveyItemDTO> items = new ArrayList<>();
+
+        List<Question> questions = questionRepository.findAllBySurvey(survey);
+        for(Question question : questions){
+            SurveyItemDTO item = new SurveyItemDTO();
+            item.setText(question.getDescription());
+            item.setType(question.getQuestionType().toString());
+            item.setId(question.getId());
+
+            ArrayList<String> options = new ArrayList<>();
+            for(AnswerOption option : question.getAnswerOptions()){
+                options.add(option.getAnswer());
+            }
+            item.setOptions(options);
+            items.add(item);
+        }
+
+        result.setItems(items);
+
+        SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
+        metaData.setEditable(true); //tymczasowo
+        result.setMetaData(metaData);
+
+        return result;
+    }
+
+    @Transactional
+    public boolean updateSurvey(Long id, SurveyDTO surveyDTO){
+        Optional<Survey> surveyOptional = surveyRepository.findById(id);
+        if(surveyOptional.isEmpty()) return false;
+        Survey survey = surveyOptional.get();
+        survey.setTitle(surveyDTO.getTitle());
+        survey.setDescription(survey.getDescription());
+
+        //sprawdzanie czy ankieta zostala rozeslana
+        List<SurveyLog> logs = surveyLogRepository.findAllBySurvey_Id(id);
+        if(logs.size() > 0) return false;
+
+        //usuwanie wszystkich pytan
+        questionRepository.removeAllBySurvey_Id(id);
+
+        //wstawienie nowych pytań
+        for(SurveyItemDTO item : surveyDTO.getItems()){
+            saveQuestion(item, survey);
+        }
+        surveyRepository.save(survey);
+        return true;
+    }
+
     private void saveQuestion(SurveyItemDTO item, Survey survey){
         Question question = new Question();
         question.setSurvey(survey);
@@ -72,25 +143,10 @@ public class SurveyService {
     }
     private User getUser() throws Exception{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(authentication.getName());
         Optional<User> userOptional = userRepository.findByUid(authentication.getName());
         if (userOptional.isEmpty()) throw new Exception("User not found");
         return userOptional.get();
     }
-
-    public List<SurveyMetaDataDTO> getSurveys() throws Exception{
-        User user = getUser();
-        Role userRole = user.getRole();
-
-        if(userRole.equals(Role.ADMIN)){
-            return getSurveysForAdmin();
-        }else if(userRole.equals(Role.ANALYST)){
-            return getSurveysForAnalyst(user);
-        }else{
-            return getSurveysForUser(user);
-        }
-    }
-
     private List<SurveyMetaDataDTO> getSurveysForUser(User user){
         List<SurveyMetaDataDTO> results = new ArrayList<>();
         List<SurveyLog> logs = surveyLogRepository.findAllByUser(user);

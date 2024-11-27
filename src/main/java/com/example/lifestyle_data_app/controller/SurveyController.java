@@ -37,5 +37,29 @@ public class SurveyController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<SurveyDTO> getSurveyById(@PathVariable("id") Long id){
+        try{
+            return new ResponseEntity<>(surveyService.getSurveyById(id), HttpStatus.OK);
+        }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<SurveyDTO> updateSurveyById(@PathVariable("id") Long id,
+                                                      @RequestBody SurveyDTO surveyDTO){
+        try{
+            boolean response = surveyService.updateSurvey(id, surveyDTO);
+            if(response){
+                return new ResponseEntity<>(HttpStatus.OK);
+            }else{
+                return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+            }
+        }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }
