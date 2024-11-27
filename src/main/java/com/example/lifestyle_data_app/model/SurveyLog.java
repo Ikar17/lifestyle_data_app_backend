@@ -1,6 +1,7 @@
 package com.example.lifestyle_data_app.model;
 
 import com.example.lifestyle_data_app.utils.SurveyStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,8 +18,10 @@ public class SurveyLog {
     @GeneratedValue
     private Long id;
     @ManyToOne
+    @JsonIgnore
     private Survey survey;
     @ManyToOne
+    @JsonIgnore
     private User user;
     private LocalDateTime sendAt;
     @Enumerated(EnumType.STRING)

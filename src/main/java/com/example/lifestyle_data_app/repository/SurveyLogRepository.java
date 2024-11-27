@@ -1,12 +1,13 @@
 package com.example.lifestyle_data_app.repository;
 
+import com.example.lifestyle_data_app.model.SurveyLog;
 import com.example.lifestyle_data_app.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.List;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByUid(String uid);
+public interface SurveyLogRepository extends JpaRepository<SurveyLog, Long> {
+    List<SurveyLog> findAllByUser(User user);
 }
