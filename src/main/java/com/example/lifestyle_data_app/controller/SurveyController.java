@@ -2,6 +2,7 @@ package com.example.lifestyle_data_app.controller;
 
 import com.example.lifestyle_data_app.dto.SurveyDTO;
 import com.example.lifestyle_data_app.dto.SurveyMetaDataDTO;
+import com.example.lifestyle_data_app.dto.SurveySendDTO;
 import com.example.lifestyle_data_app.service.SurveyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,17 @@ public class SurveyController {
                 return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
             }
         }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/sending")
+    public ResponseEntity<String> sendSurvey(@RequestBody SurveySendDTO surveySendDTO){
+        try{
+            surveyService.sendingSurvey(surveySendDTO);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

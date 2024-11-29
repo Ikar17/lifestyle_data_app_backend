@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -23,7 +23,7 @@ public class SurveyLog {
     @ManyToOne
     @JsonIgnore
     private User user;
-    private LocalDateTime sendAt;
+    private LocalDate sendAt;
     @Enumerated(EnumType.STRING)
     private SurveyStatus status;
 }

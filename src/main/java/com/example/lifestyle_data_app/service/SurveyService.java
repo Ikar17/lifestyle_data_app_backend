@@ -1,19 +1,18 @@
 package com.example.lifestyle_data_app.service;
 
-import com.example.lifestyle_data_app.dto.AuthorDTO;
-import com.example.lifestyle_data_app.dto.SurveyDTO;
-import com.example.lifestyle_data_app.dto.SurveyItemDTO;
-import com.example.lifestyle_data_app.dto.SurveyMetaDataDTO;
+import com.example.lifestyle_data_app.dto.*;
 import com.example.lifestyle_data_app.model.*;
 import com.example.lifestyle_data_app.repository.*;
 import com.example.lifestyle_data_app.utils.QuestionType;
 import com.example.lifestyle_data_app.utils.Role;
+import com.example.lifestyle_data_app.utils.SurveyStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -90,7 +89,13 @@ public class SurveyService {
         result.setItems(items);
 
         SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
-        metaData.setEditable(true); //tymczasowo
+        metaData.setSurvey(survey);
+        metaData.setAuthor(setSurveyAuthor(survey.getAuthor()));
+        List<SurveyLog> logs = surveyLogRepository.findAllBySurvey_Id(id);
+        //metaData.setSurveyLog(logs);
+        if(logs.size() > 0) metaData.setEditable(false);
+        else metaData.setEditable(true);
+
         result.setMetaData(metaData);
 
         return result;
@@ -118,6 +123,37 @@ public class SurveyService {
         surveyRepository.save(survey);
         return true;
     }
+
+    @Transactional
+    public void sendingSurvey(SurveySendDTO surveySendDTO) throws Exception {
+        // Pobieram ankietę
+        Optional<Survey> surveyOptional = surveyRepository.findById(surveySendDTO.getSurveyId());
+        if (surveyOptional.isEmpty()) {
+            throw new Exception("Survey not found");
+        }
+        Survey survey = surveyOptional.get();
+
+        // Pobieram listę użytkowników po adresie
+        List<User> users = userRepository.findUsersByAddress(
+                surveySendDTO.getVoivodeship(),
+                surveySendDTO.getDistrict(),
+                surveySendDTO.getCommune()
+        );
+
+        // Tworzenie logów
+        if (surveySendDTO.getIsOneTime()) {
+            // Jednorazowe wysyłanie ankiety
+            createSurveyLogsForDate(users, survey, LocalDate.now());
+        } else {
+            // Cykliczne wysyłanie ankiety w zakresie dat
+            LocalDate currentDate = surveySendDTO.getStartDate();
+            while (!currentDate.isAfter(surveySendDTO.getEndDate())) {
+                createSurveyLogsForDate(users, survey, currentDate);
+                currentDate = currentDate.plusDays(1);  // Przejście do kolejnego dnia
+            }
+        }
+    }
+
 
     private void saveQuestion(SurveyItemDTO item, Survey survey){
         Question question = new Question();
@@ -157,7 +193,7 @@ public class SurveyService {
 
             metaData.setAuthor(author);
             metaData.setSurvey(log.getSurvey());
-            metaData.setSurveyLog(log);
+            //metaData.setSurveyLog(log);
             metaData.setEditable(false);
 
             results.add(metaData);
@@ -205,6 +241,18 @@ public class SurveyService {
         author.setName(user.getName());
         author.setSurname(user.getSurname());
         return author;
+    }
+
+    private void createSurveyLogsForDate(List<User> users, Survey survey, LocalDate date) {
+        for (User user : users) {
+            SurveyLog log = new SurveyLog();
+            log.setSurvey(survey);
+            log.setUser(user);
+            log.setStatus(SurveyStatus.SENT);
+            log.setSendAt(date);
+
+            surveyLogRepository.save(log);
+        }
     }
 
 }
