@@ -27,9 +27,12 @@ public class SurveyService {
     private AnswerOptionRepository answerOptionRepository;
     @Autowired
     private SurveyLogRepository surveyLogRepository;
-
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private SurveyResponseRepository surveyResponseRepository;
+    @Autowired
+    private AnswerRepository answerRepository;
 
     @Transactional
     public void createSurvey(SurveyDTO surveyDTO) throws Exception{
@@ -92,7 +95,6 @@ public class SurveyService {
         metaData.setSurvey(survey);
         metaData.setAuthor(setSurveyAuthor(survey.getAuthor()));
         List<SurveyLog> logs = surveyLogRepository.findAllBySurvey_Id(id);
-        //metaData.setSurveyLog(logs);
         if(logs.size() > 0) metaData.setEditable(false);
         else metaData.setEditable(true);
 
@@ -154,6 +156,51 @@ public class SurveyService {
         }
     }
 
+    @Transactional
+    public void saveResponse(SurveyResponseDTO responseDTO) throws Exception{
+        //update log
+        Optional<SurveyLog> logOptional = surveyLogRepository.findById(responseDTO.getSurveyLogId());
+        if(logOptional.isEmpty()) throw new Exception("Not found that survey log");
+        SurveyLog log = logOptional.get();
+        log.setStatus(SurveyStatus.COMPLETE);
+        surveyLogRepository.save(log);
+
+        //save metadata about response
+        Optional<Survey> surveyOptional = surveyRepository.findById(responseDTO.getSurveyId());
+        if(surveyOptional.isEmpty()) throw new Exception("Not found survey");
+
+        SurveyResponse response = new SurveyResponse();
+        response.setUser(getUser());
+        response.setSurvey(surveyOptional.get());
+
+        response = surveyResponseRepository.save(response);
+
+        //save answers
+        for(SurveyItemDTO item : responseDTO.getAnswers()){
+            Optional<Question> questionOptional = questionRepository.findById(item.getId());
+            if(questionOptional.isEmpty()) throw new Exception("Not found question");
+
+            Answer answer = new Answer();
+            answer.setSurveyResponse(response);
+            answer.setQuestion(questionOptional.get());
+            if(item.getType().equals(QuestionType.TEXT.toString())){
+                answer.setAnswer(item.getText());
+            }else{
+                List<AnswerOption> availableOptions = questionOptional.get().getAnswerOptions();
+                List<AnswerOption> results = new ArrayList<>();
+                for(AnswerOption option : availableOptions){
+                    for(String receivingAnswer : item.getOptions()){
+                        if(receivingAnswer.equals(option.getAnswer())){
+                            results.add(option);
+                            break;
+                        }
+                    }
+                }
+                answer.setAnswerOption(results);
+            }
+            answerRepository.save(answer);
+        }
+    }
 
     private void saveQuestion(SurveyItemDTO item, Survey survey){
         Question question = new Question();
@@ -189,11 +236,11 @@ public class SurveyService {
         for(SurveyLog log : logs){
             SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
 
-            AuthorDTO author = setSurveyAuthor(log.getUser());
+            AuthorDTO author = setSurveyAuthor(log.getSurvey().getAuthor());
 
             metaData.setAuthor(author);
             metaData.setSurvey(log.getSurvey());
-            //metaData.setSurveyLog(log);
+            metaData.setSurveyLog(log);
             metaData.setEditable(false);
 
             results.add(metaData);
@@ -211,7 +258,7 @@ public class SurveyService {
             SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
             metaData.setSurvey(survey);
             metaData.setAuthor(author);
-            metaData.setEditable(false); //jesli bedzie cos w logach to false, bo zostala wyslana juz uzytkownikom
+            metaData.setEditable(false);
 
             results.add(metaData);
         }

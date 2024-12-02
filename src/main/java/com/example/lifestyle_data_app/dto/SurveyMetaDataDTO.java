@@ -10,6 +10,6 @@ import java.util.List;
 public class SurveyMetaDataDTO {
     private Survey survey;
     private AuthorDTO author;
-    private List<SurveyLog> surveyLog;
+    private SurveyLog surveyLog;
     private Boolean editable;
 }

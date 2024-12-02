@@ -27,4 +27,13 @@ public class AuthController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/role")
+    public ResponseEntity<String> getRole(){
+        try{
+            return new ResponseEntity<>(authService.getRole(), HttpStatus.OK);
+        }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

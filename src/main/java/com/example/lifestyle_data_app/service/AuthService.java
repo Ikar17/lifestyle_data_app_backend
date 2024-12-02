@@ -6,7 +6,11 @@ import com.example.lifestyle_data_app.model.User;
 import com.example.lifestyle_data_app.repository.UserRepository;
 import com.example.lifestyle_data_app.utils.Role;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -36,5 +40,15 @@ public class AuthService {
             return null;
         }
 
+    }
+
+    public String getRole(){
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Optional<User> userOptional = userRepository.findByUid(authentication.getName());
+            return userOptional.map(user -> user.getRole().toString()).orElse(null);
+        }catch(Exception e){
+            return null;
+        }
     }
 }
