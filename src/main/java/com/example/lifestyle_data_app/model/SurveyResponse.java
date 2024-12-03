@@ -1,5 +1,6 @@
 package com.example.lifestyle_data_app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,9 +17,10 @@ public class SurveyResponse {
     @GeneratedValue
     private Long id;
     @ManyToOne
+    @JsonIgnore
     private User user;
     @ManyToOne
-    private Survey survey;
+    private SurveyLog surveyLog;
     private LocalDateTime createdAt;
     @PrePersist
     protected void onCreate() {

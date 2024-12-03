@@ -103,6 +103,12 @@ public class SurveyService {
         return result;
     }
 
+    public List<Answer> getSurveyResponse(Long surveyLogId) throws Exception{
+        Optional<SurveyResponse> response = surveyResponseRepository.findBySurveyLog_Id(surveyLogId);
+        if(response.isEmpty()) throw new Exception("Not found survey response");
+        return answerRepository.findAllBySurveyResponse_Id(response.get().getId());
+    }
+
     @Transactional
     public boolean updateSurvey(Long id, SurveyDTO surveyDTO){
         Optional<Survey> surveyOptional = surveyRepository.findById(id);
@@ -166,12 +172,9 @@ public class SurveyService {
         surveyLogRepository.save(log);
 
         //save metadata about response
-        Optional<Survey> surveyOptional = surveyRepository.findById(responseDTO.getSurveyId());
-        if(surveyOptional.isEmpty()) throw new Exception("Not found survey");
-
         SurveyResponse response = new SurveyResponse();
         response.setUser(getUser());
-        response.setSurvey(surveyOptional.get());
+        response.setSurveyLog(log);
 
         response = surveyResponseRepository.save(response);
 

@@ -4,6 +4,8 @@ import com.example.lifestyle_data_app.dto.SurveyDTO;
 import com.example.lifestyle_data_app.dto.SurveyMetaDataDTO;
 import com.example.lifestyle_data_app.dto.SurveyResponseDTO;
 import com.example.lifestyle_data_app.dto.SurveySendDTO;
+import com.example.lifestyle_data_app.model.Answer;
+import com.example.lifestyle_data_app.model.SurveyResponse;
 import com.example.lifestyle_data_app.service.SurveyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -79,6 +81,15 @@ public class SurveyController {
         try{
             surveyService.saveResponse(response);
             return new ResponseEntity<>(HttpStatus.CREATED);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/response/{surveyLogId}")
+    public ResponseEntity<List<Answer>> getSurveyResponse(@PathVariable Long surveyLogId){
+        try{
+            return new ResponseEntity<>(surveyService.getSurveyResponse(surveyLogId), HttpStatus.OK);
         }catch(Exception e){
             System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

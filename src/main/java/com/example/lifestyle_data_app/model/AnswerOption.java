@@ -1,5 +1,6 @@
 package com.example.lifestyle_data_app.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -17,6 +18,7 @@ public class AnswerOption {
     @GeneratedValue
     private Long id;
     @ManyToOne
+    @JsonIgnore
     private Question question;
     private String answer;
 }
