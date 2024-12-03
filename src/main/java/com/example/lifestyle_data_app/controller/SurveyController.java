@@ -1,9 +1,6 @@
 package com.example.lifestyle_data_app.controller;
 
-import com.example.lifestyle_data_app.dto.SurveyDTO;
-import com.example.lifestyle_data_app.dto.SurveyMetaDataDTO;
-import com.example.lifestyle_data_app.dto.SurveyResponseDTO;
-import com.example.lifestyle_data_app.dto.SurveySendDTO;
+import com.example.lifestyle_data_app.dto.*;
 import com.example.lifestyle_data_app.model.Answer;
 import com.example.lifestyle_data_app.model.SurveyResponse;
 import com.example.lifestyle_data_app.service.SurveyService;
@@ -107,5 +104,14 @@ public class SurveyController {
         }
     }
 
+    @GetMapping("/results/{surveyId}")
+    public ResponseEntity<SurveyResultsDTO> getSurveyResults(@PathVariable Long surveyId){
+        try{
+            return new ResponseEntity<>(surveyService.getSurveyResultsById(surveyId), HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

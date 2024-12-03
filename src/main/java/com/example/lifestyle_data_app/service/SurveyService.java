@@ -214,6 +214,50 @@ public class SurveyService {
         surveyRepository.deleteById(surveyId);
     }
 
+    public SurveyResultsDTO getSurveyResultsById(Long surveyId) throws Exception{
+        Optional<Survey> surveyOptional = surveyRepository.findById(surveyId);
+        if(surveyOptional.isEmpty()) throw new Exception("Not found survey");
+        Survey survey = surveyOptional.get();
+
+        SurveyResultsDTO results = new SurveyResultsDTO();
+        results.setSurveyId(surveyId);
+        results.setTitle(survey.getTitle());
+        results.setSentCount(surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.SENT));
+        results.setCompleteCount(surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.COMPLETE));
+        results.setQuestions(new ArrayList<>());
+
+        List<Question> questions = questionRepository.findAllBySurvey(survey);
+        for(Question question : questions){
+            SurveyResultsDTO.QuestionDTO questionItem = new SurveyResultsDTO.QuestionDTO();
+            questionItem.setQuestion(question.getDescription());
+            questionItem.setQuestionType(question.getQuestionType().toString());
+            questionItem.setResults(new ArrayList<>());
+
+            if(question.getQuestionType().equals(QuestionType.TEXT)){
+                List<Answer> answers = answerRepository.findAllByQuestion(question);
+                for(Answer answer : answers){
+                    SurveyResultsDTO.AnswerResultDTO answerItem = new SurveyResultsDTO.AnswerResultDTO();
+                    answerItem.setAnswer(answer.getAnswer());
+                    answerItem.setCount(1L);
+
+                    questionItem.getResults().add(answerItem);
+                }
+            }else{
+                for(AnswerOption answerOption : question.getAnswerOptions()){
+                    SurveyResultsDTO.AnswerResultDTO answerItem = new SurveyResultsDTO.AnswerResultDTO();
+                    answerItem.setAnswer(answerOption.getAnswer());
+                    answerItem.setCount(answerRepository.countAllByQuestionAndAnswerOption(question, answerOption));
+
+                    questionItem.getResults().add(answerItem);
+                }
+            }
+
+            results.getQuestions().add(questionItem);
+        }
+
+        return results;
+    }
+
     private void saveQuestion(SurveyItemDTO item, Survey survey){
         Question question = new Question();
         question.setSurvey(survey);
