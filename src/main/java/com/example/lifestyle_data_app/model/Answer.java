@@ -19,7 +19,7 @@ public class Answer {
     private SurveyResponse surveyResponse;
     @ManyToOne
     private Question question;
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.REMOVE)
     private List<AnswerOption> answerOption;
     private String answer;
 }

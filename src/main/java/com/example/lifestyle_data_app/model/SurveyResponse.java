@@ -19,7 +19,7 @@ public class SurveyResponse {
     @ManyToOne
     @JsonIgnore
     private User user;
-    @ManyToOne
+    @OneToOne(cascade = CascadeType.REMOVE)
     private SurveyLog surveyLog;
     private LocalDateTime createdAt;
     @PrePersist

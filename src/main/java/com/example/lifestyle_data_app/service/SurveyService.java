@@ -205,6 +205,15 @@ public class SurveyService {
         }
     }
 
+    @Transactional
+    public void deleteSurveyById(Long surveyId){
+        answerRepository.removeAllBySurveyResponse_SurveyLog_Survey_Id(surveyId);
+        questionRepository.removeAllBySurvey_Id(surveyId);
+        surveyResponseRepository.removeAllBySurveyLog_Survey_Id(surveyId);
+        surveyLogRepository.removeAllBySurvey_Id(surveyId);
+        surveyRepository.deleteById(surveyId);
+    }
+
     private void saveQuestion(SurveyItemDTO item, Survey survey){
         Question question = new Question();
         question.setSurvey(survey);
