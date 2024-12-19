@@ -51,4 +51,10 @@ public class AuthService {
             return null;
         }
     }
+    public User getUser() throws Exception{
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Optional<User> userOptional = userRepository.findByUid(authentication.getName());
+        if (userOptional.isEmpty()) throw new Exception("User not found");
+        return userOptional.get();
+    }
 }

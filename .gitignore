@@ -4,6 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 firebase_key.json
+env.properties
 
 ### STS ###
 .apt_generated
