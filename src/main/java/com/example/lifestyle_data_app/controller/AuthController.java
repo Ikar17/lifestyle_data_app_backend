@@ -84,4 +84,17 @@ public class AuthController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PutMapping("/role")
+    public ResponseEntity<String> changeUserRole(@Param("uid") String uid, @Param("role") String role){
+        try{
+            User user = authService.findUserByUid(uid);
+            if(user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            authService.changeUserRole(user, role);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

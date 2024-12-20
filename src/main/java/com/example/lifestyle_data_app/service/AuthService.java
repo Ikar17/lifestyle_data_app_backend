@@ -90,4 +90,16 @@ public class AuthService {
         surveyService.removeAllByUser(user);
         userRepository.delete(user);
     }
+
+    public void changeUserRole(User user, String role){
+        if(role.equals(Role.ADMIN.toString())){
+            user.setRole(Role.ADMIN);
+        }else if(role.equals(Role.ANALYST.toString())){
+            user.setRole(Role.ANALYST);
+        }else if(role.equals(Role.USER.toString())){
+            user.setRole(Role.USER);
+        }else return;
+
+        userRepository.save(user);
+    }
 }
