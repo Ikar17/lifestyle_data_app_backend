@@ -4,6 +4,7 @@ import com.example.lifestyle_data_app.dto.SignUpDTO;
 import com.example.lifestyle_data_app.model.User;
 import com.example.lifestyle_data_app.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,53 @@ public class AuthController {
         try{
             return new ResponseEntity<>(authService.getRole(), HttpStatus.OK);
         }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/details")
+    public ResponseEntity<User> getUserData(){
+        try{
+            return new ResponseEntity<>(authService.getUser(), HttpStatus.OK);
+        }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<User> updateUserData(@RequestBody SignUpDTO userDetails){
+        try{
+            if(authService.updateUserData(userDetails)){
+                return new ResponseEntity<>(authService.getUser(), HttpStatus.OK);
+            }else{
+                return new ResponseEntity<>(authService.getUser(), HttpStatus.NOT_ACCEPTABLE);
+            }
+        }catch(Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping
+    public ResponseEntity<String> deleteMyAccount(){
+        try{
+            User user = authService.getUser();
+            authService.deleteUser(user);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/user")
+    public ResponseEntity<String> deleteUserAccount(@Param("uid") String uid){
+        try{
+            User user = authService.findUserByUid(uid);
+            if(user == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            authService.deleteUser(user);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

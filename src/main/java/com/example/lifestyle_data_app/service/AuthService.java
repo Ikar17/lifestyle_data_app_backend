@@ -19,6 +19,8 @@ public class AuthService {
     private AddressService addressService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private SurveyService surveyService;
 
     public User addUser(SignUpDTO signUpDTO){
         try{
@@ -56,5 +58,36 @@ public class AuthService {
         Optional<User> userOptional = userRepository.findByUid(authentication.getName());
         if (userOptional.isEmpty()) throw new Exception("User not found");
         return userOptional.get();
+    }
+
+    public boolean updateUserData(SignUpDTO userData){
+        try{
+            User user = getUser();
+            if(userData.getBirthDate() != null) user.setBirthDate(userData.getBirthDate());
+            if(userData.getName() != null) user.setName(userData.getName());
+            if(userData.getSurname() != null) user.setSurname(userData.getSurname());
+
+            if(userData.getVoivodeship() != null && userData.getComunne() != null && userData.getDistrict() != null
+                    && (!userData.getVoivodeship().equals(user.getAddress().getVoivodeship().getName())
+                        || !userData.getDistrict().equals(user.getAddress().getDistrict().getName())
+                        || !userData.getComunne().equals(user.getAddress().getComunne().getName()))
+            ){
+                Address address = addressService.addAddress(userData.getVoivodeship(), userData.getDistrict(), userData.getComunne());
+                user.setAddress(address);
+            }
+            return true;
+        }catch(Exception e){
+            return false;
+        }
+    }
+
+    public User findUserByUid(String uid){
+        Optional<User> userOptional = userRepository.findByUid(uid);
+        return userOptional.orElse(null);
+    }
+
+    public void deleteUser(User user){
+        surveyService.removeAllByUser(user);
+        userRepository.delete(user);
     }
 }

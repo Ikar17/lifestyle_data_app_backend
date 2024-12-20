@@ -258,6 +258,18 @@ public class SurveyService {
         return results;
     }
 
+    @Transactional
+    public void removeAllByUser(User user){
+        answerRepository.removeAllBySurveyResponse_User(user);
+        surveyResponseRepository.removeAllByUser(user);
+        surveyLogRepository.removeAllByUser(user);
+
+        List<Survey> surveys = surveyRepository.getAllByAuthor(user);
+        for(Survey survey : surveys){
+            deleteSurveyById(survey.getId());
+        }
+    }
+
     private void saveQuestion(SurveyItemDTO item, Survey survey){
         Question question = new Question();
         question.setSurvey(survey);
