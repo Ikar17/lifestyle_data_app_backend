@@ -2,9 +2,9 @@ package com.example.lifestyle_data_app.controller;
 
 import com.example.lifestyle_data_app.dto.*;
 import com.example.lifestyle_data_app.model.Answer;
-import com.example.lifestyle_data_app.model.SurveyResponse;
 import com.example.lifestyle_data_app.service.SurveyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +30,11 @@ public class SurveyController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SurveyMetaDataDTO>> getSurveys(){
+    public ResponseEntity<Page<SurveyMetaDataDTO>> getSurveys(@RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "3") int size,
+                                                              @RequestParam(defaultValue = "asc") String sort){
         try{
-            return new ResponseEntity<>(surveyService.getSurveys(), HttpStatus.OK);
+            return new ResponseEntity<>(surveyService.getSurveys(page, size, sort), HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

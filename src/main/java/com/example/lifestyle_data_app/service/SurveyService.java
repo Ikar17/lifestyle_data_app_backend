@@ -7,6 +7,7 @@ import com.example.lifestyle_data_app.utils.QuestionType;
 import com.example.lifestyle_data_app.utils.Role;
 import com.example.lifestyle_data_app.utils.SurveyStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -50,16 +51,18 @@ public class SurveyService {
         }
     }
 
-    public List<SurveyMetaDataDTO> getSurveys() throws Exception{
+    public Page<SurveyMetaDataDTO> getSurveys(int page, int size, String sort) throws Exception{
         User user = getUser();
         Role userRole = user.getRole();
 
+        boolean ascending = sort.equals("asc");
+
         if(userRole.equals(Role.ADMIN)){
-            return getSurveysForAdmin();
+            return getSurveysForAdmin(page, size, ascending);
         }else if(userRole.equals(Role.ANALYST)){
-            return getSurveysForAnalyst(user);
+            return getSurveysForAnalyst(user, page, size, ascending);
         }else{
-            return getSurveysForUser(user);
+            return getSurveysForUser(user, page, size, ascending);
         }
     }
 
@@ -298,10 +301,14 @@ public class SurveyService {
         if (userOptional.isEmpty()) throw new Exception("User not found");
         return userOptional.get();
     }
-    private List<SurveyMetaDataDTO> getSurveysForUser(User user){
+    private Page<SurveyMetaDataDTO> getSurveysForUser(User user, int page, int size, boolean ascending){
         List<SurveyMetaDataDTO> results = new ArrayList<>();
-        List<SurveyLog> logs = surveyLogRepository.findAllByUser(user);
-        for(SurveyLog log : logs){
+
+        Sort sort = ascending ? Sort.by("sendAt").ascending() : Sort.by("sendAt").descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<SurveyLog> logs = surveyLogRepository.findAllByUser(user, pageable);
+        for(SurveyLog log : logs.getContent()){
             SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
 
             AuthorDTO author = setSurveyAuthor(log.getSurvey().getAuthor());
@@ -313,16 +320,19 @@ public class SurveyService {
 
             results.add(metaData);
         }
-        return results;
+        return new PageImpl<>(results,pageable,logs.getTotalElements());
     }
 
-    private List<SurveyMetaDataDTO> getSurveysForAnalyst(User user){
+    private Page<SurveyMetaDataDTO> getSurveysForAnalyst(User user, int page, int size, boolean ascending){
         List<SurveyMetaDataDTO> results = new ArrayList<>();
 
         AuthorDTO author = setSurveyAuthor(user);
 
-        List<Survey> surveys = surveyRepository.getAllByAuthor(user);
-        for(Survey survey : surveys){
+        Sort sort = ascending ? Sort.by("createdAt").ascending() : Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Survey> surveys = surveyRepository.getAllByAuthor(user, pageable);
+        for(Survey survey : surveys.getContent()){
             SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
             metaData.setSurvey(survey);
             metaData.setAuthor(author);
@@ -330,13 +340,17 @@ public class SurveyService {
 
             results.add(metaData);
         }
-        return results;
+        return new PageImpl<>(results,pageable,surveys.getTotalElements());
     }
 
-    private List<SurveyMetaDataDTO> getSurveysForAdmin(){
+    private Page<SurveyMetaDataDTO> getSurveysForAdmin(int page, int size, boolean ascending){
         List<SurveyMetaDataDTO> results = new ArrayList<>();
-        List<Survey> surveys = surveyRepository.findAll();
-        for(Survey survey : surveys){
+
+        Sort sort = ascending ? Sort.by("createdAt").ascending() : Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Survey> surveys = surveyRepository.findAll(pageable);
+        for(Survey survey : surveys.getContent()){
             SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
 
             AuthorDTO author = setSurveyAuthor(survey.getAuthor());
@@ -347,7 +361,7 @@ public class SurveyService {
 
             results.add(metaData);
         }
-        return results;
+        return new PageImpl<>(results,pageable,surveys.getTotalElements());
     }
 
     private AuthorDTO setSurveyAuthor(User user){
