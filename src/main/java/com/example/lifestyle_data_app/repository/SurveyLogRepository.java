@@ -8,11 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
 public interface SurveyLogRepository extends JpaRepository<SurveyLog, Long> {
-    Page<SurveyLog> findAllByUser(User user, Pageable pageable);
+    Page<SurveyLog> findAllByUserAndSendAtBefore(User user, LocalDate date, Pageable pageable);
     List<SurveyLog> findAllBySurvey_Id(Long surveyId);
     void removeAllBySurvey_Id(Long surveyId);
     long countAllBySurvey_IdAndStatus(Long surveyId, SurveyStatus status);

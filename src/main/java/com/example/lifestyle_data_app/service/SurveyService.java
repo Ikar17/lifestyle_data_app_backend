@@ -307,7 +307,9 @@ public class SurveyService {
         Sort sort = ascending ? Sort.by("sendAt").ascending() : Sort.by("sendAt").descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<SurveyLog> logs = surveyLogRepository.findAllByUser(user, pageable);
+        LocalDate date = LocalDate.now().plusDays(1);
+
+        Page<SurveyLog> logs = surveyLogRepository.findAllByUserAndSendAtBefore(user, date, pageable);
         for(SurveyLog log : logs.getContent()){
             SurveyMetaDataDTO metaData = new SurveyMetaDataDTO();
 
