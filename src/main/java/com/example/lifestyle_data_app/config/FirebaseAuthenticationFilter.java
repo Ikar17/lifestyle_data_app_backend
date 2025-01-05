@@ -30,7 +30,6 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String idToken = authHeader.substring(7);
-
             try {
                 FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
                 String uid = decodedToken.getUid();
@@ -39,7 +38,7 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
                 if(userOptional.isPresent()){
                     User user = userOptional.get();
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority( "ROLE_" + user.getRole().toString());
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             uid, null, Collections.singletonList(authority));

@@ -1,6 +1,8 @@
 package com.example.lifestyle_data_app.repository;
 
 import com.example.lifestyle_data_app.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,4 +23,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("voivodeship") String voivodeship,
             @Param("district") String district,
             @Param("commune") String commune);
+    Page<User> findByIdNot(Long id, Pageable pageable);
 }

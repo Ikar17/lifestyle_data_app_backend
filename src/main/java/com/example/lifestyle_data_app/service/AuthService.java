@@ -5,7 +5,12 @@ import com.example.lifestyle_data_app.model.Address;
 import com.example.lifestyle_data_app.model.User;
 import com.example.lifestyle_data_app.repository.UserRepository;
 import com.example.lifestyle_data_app.utils.Role;
+import com.google.firebase.auth.FirebaseAuth;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -89,6 +94,11 @@ public class AuthService {
     public void deleteUser(User user){
         surveyService.removeAllByUser(user);
         userRepository.delete(user);
+        try{
+            FirebaseAuth.getInstance().deleteUser(user.getUid());
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+        }
     }
 
     public void changeUserRole(User user, String role){
@@ -102,4 +112,27 @@ public class AuthService {
 
         userRepository.save(user);
     }
+    public Page<User> getUsersExcludingCurrent(int page, int size, String sortEmail, String sortRole) {
+        try{
+            User user = getUser();
+            Sort sort = buildSort(sortEmail, sortRole);
+            Pageable pageable = PageRequest.of(page, size, sort);
+            return userRepository.findByIdNot(user.getId(), pageable);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return null;
+        }
+
+    }
+    private Sort buildSort(String sortEmail, String sortRole) {
+        Sort sort = Sort.unsorted();
+        if (!sortRole.equals("-")) {
+            sort = sort.and(Sort.by(sortRole.equalsIgnoreCase("asc") ? Sort.Order.asc("role") : Sort.Order.desc("role")));
+        }
+        if (!sortEmail.equals("-")) {
+            sort = sort.and(Sort.by(sortEmail.equalsIgnoreCase("asc") ? Sort.Order.asc("email") : Sort.Order.desc("email")));
+        }
+        return sort;
+    }
+
 }

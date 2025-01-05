@@ -4,6 +4,7 @@ import com.example.lifestyle_data_app.dto.SignUpDTO;
 import com.example.lifestyle_data_app.model.User;
 import com.example.lifestyle_data_app.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -94,6 +95,18 @@ public class AuthController {
             return new ResponseEntity<>(HttpStatus.OK);
         }catch(Exception e){
             System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<Page<User>> getUsers(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "5") int size,
+                                               @RequestParam(defaultValue = "-") String sortEmail,
+                                               @RequestParam(defaultValue = "-") String sortRole){
+        try{
+            return new ResponseEntity<>(authService.getUsersExcludingCurrent(page, size, sortEmail, sortRole), HttpStatus.OK);
+        }catch(Exception e){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
