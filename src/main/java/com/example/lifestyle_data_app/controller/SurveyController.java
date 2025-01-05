@@ -3,12 +3,15 @@ package com.example.lifestyle_data_app.controller;
 import com.example.lifestyle_data_app.dto.*;
 import com.example.lifestyle_data_app.model.Answer;
 import com.example.lifestyle_data_app.service.SurveyService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -110,6 +113,22 @@ public class SurveyController {
     public ResponseEntity<SurveyResultsDTO> getSurveyResults(@PathVariable Long surveyId){
         try{
             return new ResponseEntity<>(surveyService.getSurveyResultsById(surveyId), HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/results/csv/{surveyId}")
+    public ResponseEntity<String> getSurveyResultsInCSVFile(HttpServletResponse response, @PathVariable Long surveyId){
+        try(PrintWriter writer = new PrintWriter(response.getOutputStream(), true, StandardCharsets.UTF_8)){
+
+            response.setContentType("text/csv; charset=UTF-8");
+            response.setHeader("Content-Disposition", "attachment; filename=survey_results.csv");
+            response.setCharacterEncoding("UTF-8");
+
+            surveyService.test(surveyId, writer);
+            return new ResponseEntity<>(HttpStatus.OK);
         }catch(Exception e){
             System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

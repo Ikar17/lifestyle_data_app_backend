@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -225,8 +226,9 @@ public class SurveyService {
         SurveyResultsDTO results = new SurveyResultsDTO();
         results.setSurveyId(surveyId);
         results.setTitle(survey.getTitle());
-        results.setSentCount(surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.SENT));
         results.setCompleteCount(surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.COMPLETE));
+        Long sentCount = surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.SENT) + results.getCompleteCount();
+        results.setSentCount(sentCount);
         results.setQuestions(new ArrayList<>());
 
         List<Question> questions = questionRepository.findAllBySurvey(survey);
@@ -386,4 +388,66 @@ public class SurveyService {
         }
     }
 
+
+    public void test(Long surveyId, PrintWriter writer) {
+        List<SurveyResponse> responses = surveyResponseRepository.getAllBySurveyLog_Survey_Id(surveyId);
+
+        writer.println(createCSVFileHeader(surveyId));
+
+        for(SurveyResponse response : responses){
+            User user = response.getUser();
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.append(response.getCreatedAt().toString());
+            stringBuilder.append(";");
+            stringBuilder.append(user.getEmail());
+            stringBuilder.append(";");
+            stringBuilder.append(user.getAddress().getVoivodeship().getName());
+            stringBuilder.append(";");
+            stringBuilder.append(user.getAddress().getDistrict().getName());
+            stringBuilder.append(";");
+            stringBuilder.append(user.getAddress().getComunne().getName());
+            stringBuilder.append(";");
+
+            List<Answer> answers = answerRepository.findAllBySurveyResponse_Id(response.getId());
+
+            for(Answer answer : answers){
+                if(answer.getQuestion().getQuestionType().equals(QuestionType.TEXT)){
+                    stringBuilder.append(answer.getAnswer());
+                }else{
+                    List<AnswerOption> options = answer.getAnswerOption();
+                    if(options == null || options.size() == 0) stringBuilder.append(" ");
+                    else{
+                        for(AnswerOption option : answer.getAnswerOption()){
+                            stringBuilder.append(option.getAnswer());
+                            stringBuilder.append(", ");
+                        }
+                        stringBuilder.setLength(stringBuilder.length() - 2);
+                    }
+                }
+                stringBuilder.append(";");
+            }
+            stringBuilder.setLength(stringBuilder.length() - 1);
+            writer.println(stringBuilder);
+        }
+    }
+
+    private String createCSVFileHeader(Long surveyId){
+        List<Question> questions = questionRepository.findAllBySurvey_Id(surveyId);
+        StringBuilder results = new StringBuilder();
+
+        results.append("Data odpowiedzi;");
+        results.append("Email;");
+        results.append("Województwo;");
+        results.append("Powiat;");
+        results.append("Gmina;");
+
+        for(Question question : questions){
+            results.append(question.getDescription());
+            results.append(";");
+        }
+        results.setLength(results.length() - 1);
+        return results.toString();
+    }
 }
