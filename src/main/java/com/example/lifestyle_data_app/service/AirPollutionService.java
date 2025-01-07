@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -73,6 +74,42 @@ public class AirPollutionService {
             return null;
         }
     }
+
+    public void getAirQualityDataCSVFile(String voivodeship, String district, String commune, String dateFromString, String dateToString, PrintWriter writer){
+        List<HourlyAverageAirPollutionDTO> data = getAirQualityData(voivodeship, district, commune, dateFromString, dateToString);
+        if(data == null) return;
+
+        String header = "Czas;indeks;co;no;no2;o3;so2;pm2_5;pm10;nh3";
+        writer.println(header);
+
+        StringBuilder builder = new StringBuilder();
+        for(HourlyAverageAirPollutionDTO item : data){
+            builder.append(item.getCreatedAt().toString());
+            builder.append(";");
+            builder.append(item.getAirIndex().toString());
+            builder.append(";");
+            builder.append(item.getCo().toString());
+            builder.append(";");
+            builder.append(item.getNo().toString());
+            builder.append(";");
+            builder.append(item.getNo2().toString());
+            builder.append(";");
+            builder.append(item.getO3().toString());
+            builder.append(";");
+            builder.append(item.getSo2().toString());
+            builder.append(";");
+            builder.append(item.getPm2_5().toString());
+            builder.append(";");
+            builder.append(item.getPm10().toString());
+            builder.append(";");
+            builder.append(item.getNh3().toString());
+
+            writer.println(builder);
+            builder.setLength(0);
+        }
+    }
+
+
     @Scheduled(fixedRate = 21600000) //6h
     public void fillHistoricalData() {
         LocalDateTime lastFetchTime = airPollutionRepository.findLastFetchTime();
