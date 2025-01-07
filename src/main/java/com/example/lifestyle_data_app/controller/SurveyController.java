@@ -135,4 +135,29 @@ public class SurveyController {
         }
     }
 
+    @GetMapping("/stats/{surveyId}")
+    public ResponseEntity<Page<SurveySendingStatsDTO>> getSurveySendingStats(@PathVariable Long surveyId,
+                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "5") int size,
+                                                                             @RequestParam(defaultValue = "asc") String sort){
+        try{
+            return new ResponseEntity<>(surveyService.getSurveySendingStats(surveyId, page, size, sort), HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/stats/{surveyId}/{date}")
+    public ResponseEntity<String> deleteSurveySendingByDate(@PathVariable Long surveyId,
+                                                        @PathVariable String date){
+        try{
+            surveyService.deleleSurveySendingByDate(surveyId, date);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

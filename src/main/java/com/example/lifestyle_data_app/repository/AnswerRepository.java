@@ -7,6 +7,7 @@ import com.example.lifestyle_data_app.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -16,4 +17,5 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     long countAllByQuestionAndAnswerOption(Question question, AnswerOption option);
     List<Answer> findAllByQuestion(Question question);
     void removeAllBySurveyResponse_User(User user);
+    void removeAllBySurveyResponse_CreatedAtBetweenAndSurveyResponse_SurveyLog_Survey_Id(LocalDateTime dateStart, LocalDateTime dateEnd, Long surveyId);
 }

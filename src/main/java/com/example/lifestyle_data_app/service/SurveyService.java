@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.PrintWriter;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -449,5 +451,24 @@ public class SurveyService {
         }
         results.setLength(results.length() - 1);
         return results.toString();
+    }
+
+    public Page<SurveySendingStatsDTO> getSurveySendingStats(Long surveyId, int page, int size, String sortString){
+        Sort sort = sortString.equals("desc") ? Sort.by("sendAt").descending() : Sort.by("sendAt").ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return surveyLogRepository.countSurveysBySurveyIdAndDates(surveyId, pageable);
+    }
+
+    @Transactional
+    public void deleleSurveySendingByDate(Long surveyId, String dateString){
+        if(dateString == null) return;
+
+        LocalDate date = LocalDate.parse(dateString);
+        LocalDateTime dateStart = date.atStartOfDay();
+        LocalDateTime dateEnd = date.atTime(LocalTime.MAX);
+
+        answerRepository.removeAllBySurveyResponse_CreatedAtBetweenAndSurveyResponse_SurveyLog_Survey_Id(dateStart, dateEnd, surveyId);
+        surveyResponseRepository.removeAllByCreatedAtBetweenAndSurveyLog_Survey_Id(dateStart, dateEnd, surveyId);
+        surveyLogRepository.removeAllBySurvey_IdAndSendAt(surveyId, date);
     }
 }
