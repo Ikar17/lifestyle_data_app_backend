@@ -15,6 +15,10 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class AirPollutionService {
@@ -110,7 +114,7 @@ public class AirPollutionService {
     }
 
 
-    @Scheduled(fixedRate = 21600000) //6h
+    @Scheduled(fixedRate = 10800000) //3h + ~1h to fetch data
     public void fillHistoricalData() {
         LocalDateTime lastFetchTime = airPollutionRepository.findLastFetchTime();
         LocalDateTime now = LocalDateTime.now();
@@ -126,35 +130,42 @@ public class AirPollutionService {
         int batchSize = 60;
 
         System.out.println("Fetching hourly air quality data...");
-        for (int i = 0; i < comunnes.size(); i += batchSize) {
-            List<Comunne> batch = comunnes.subList(i, Math.min(i + batchSize, comunnes.size()));
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+        AtomicInteger currentIndex = new AtomicInteger(0);
+        LocalDateTime finalLastFetchTime = lastFetchTime;
+
+        //due to limitation of free subscription
+        scheduler.scheduleAtFixedRate(() -> {
+            int index = currentIndex.get();
+            if (index >= comunnes.size()) {
+                scheduler.shutdown();
+                System.out.println("Fetching data is done.");
+                return;
+            }
+
+            List<Comunne> batch = comunnes.subList(
+                    index,
+                    Math.min(index + batchSize, comunnes.size())
+            );
 
             for (Comunne comunne : batch) {
                 try {
                     AirPollutionDTO data = airPollutionApiClient.fetchHistoricalAirQuality(
                             comunne.getLan(),
                             comunne.getLon(),
-                            lastFetchTime,
-                            now);
+                            finalLastFetchTime,
+                            now
+                    );
                     saveAirData(comunne, data);
                 } catch (Exception e) {
                     System.out.println("Error fetching data for commune " + comunne.getName() + ": " + e.getMessage());
                 }
             }
 
-            /*if (i + batchSize < comunnes.size()) {
-                try {
-                    System.out.println("Waiting 1 minute before processing the next batch...");
-                    Thread.sleep(60000); // Wait for 1 minute
-                } catch (InterruptedException e) {
-                    System.out.println("Batch processing interrupted: " + e.getMessage());
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }*/
-        }
-
-        System.out.println("Fetching data is done.");
+            currentIndex.addAndGet(batchSize);
+        }, 0, 1, TimeUnit.MINUTES);
     }
 
 
