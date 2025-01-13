@@ -286,14 +286,14 @@ public class SurveyService {
                             question,
                             startDate,
                             endDate,
-                            comunne
+                            district
                     );
                 }else if(!voivodeship.equals("")){
                     answers = answerRepository.findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Voivodeship_Name(
                             question,
                             startDate,
                             endDate,
-                            comunne
+                            voivodeship
                     );
                 } else{
                     answers = answerRepository.findAllByQuestionAndSurveyResponse_CreatedAtBetween(
