@@ -31,10 +31,10 @@ public class AirPollutionService {
     @Autowired
     private AuthService authService;
 
-    public List<HourlyAverageAirPollutionDTO> getAirQualityData(String voivodeship, String district, String commune, String dateFromString, String dateToString){
-        try{
+    public List<HourlyAverageAirPollutionDTO> getAirQualityData(String voivodeship, String district, String commune, String dateFromString, String dateToString) {
+        try {
             User user = authService.getUser();
-            if(commune.equals("") && district.equals("") && voivodeship.equals("")){
+            if (commune.equals("") && district.equals("") && voivodeship.equals("")) {
                 commune = user.getAddress().getComunne().getName();
             }
 
@@ -42,52 +42,52 @@ public class AirPollutionService {
             LocalDateTime dateFrom;
             LocalDateTime dateTo;
 
-            if(dateFromString.equals("") && dateToString.equals("")){
+            if (dateFromString.equals("") && dateToString.equals("")) {
                 dateTo = LocalDateTime.now();
                 dateFrom = dateTo.minusDays(3);
-            }else if(dateFromString.equals("")){
+            } else if (dateFromString.equals("")) {
                 dateTo = LocalDateTime.parse(dateToString);
                 dateFrom = dateTo.minusDays(3);
-            }else if(dateToString.equals("")){
+            } else if (dateToString.equals("")) {
                 dateFrom = LocalDateTime.parse(dateFromString);
                 dateTo = LocalDateTime.now();
-            }else{
+            } else {
                 dateFrom = LocalDateTime.parse(dateFromString);
                 dateTo = LocalDateTime.parse(dateToString);
             }
 
-            if(commune.equals("")){
+            if (commune.equals("")) {
                 results = calculateDateByDistrictOrVoivodeship(voivodeship, district, dateFrom, dateTo);
-            }else{
+            } else {
                 results = airPollutionRepository.findAverageAirPollutionByComunneAndDateRange(commune, dateFrom, dateTo);
             }
 
             return results;
-        }catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             return null;
         }
     }
 
-    public AirPollution getLastUserAirQualityData(){
-        try{
+    public AirPollution getLastUserAirQualityData() {
+        try {
             User user = authService.getUser();
             Comunne comunne = user.getAddress().getComunne();
             return airPollutionRepository.findTopByComunneOrderByCreatedAtDesc(comunne);
-        }catch(Exception e){
+        } catch (Exception e) {
             return null;
         }
     }
 
-    public void getAirQualityDataCSVFile(String voivodeship, String district, String commune, String dateFromString, String dateToString, PrintWriter writer){
+    public void getAirQualityDataCSVFile(String voivodeship, String district, String commune, String dateFromString, String dateToString, PrintWriter writer) {
         List<HourlyAverageAirPollutionDTO> data = getAirQualityData(voivodeship, district, commune, dateFromString, dateToString);
-        if(data == null) return;
+        if (data == null) return;
 
         String header = "Czas;indeks;co;no;no2;o3;so2;pm2_5;pm10;nh3";
         writer.println(header);
 
         StringBuilder builder = new StringBuilder();
-        for(HourlyAverageAirPollutionDTO item : data){
+        for (HourlyAverageAirPollutionDTO item : data) {
             builder.append(item.getCreatedAt().toString());
             builder.append(";");
             builder.append(item.getAirIndex().toString());
@@ -137,41 +137,45 @@ public class AirPollutionService {
         LocalDateTime finalLastFetchTime = lastFetchTime;
 
         //due to limitation of free subscription
-        scheduler.scheduleAtFixedRate(() -> {
-            int index = currentIndex.get();
-            if (index >= comunnes.size()) {
-                scheduler.shutdown();
-                System.out.println("Fetching data is done.");
-                return;
-            }
-
-            List<Comunne> batch = comunnes.subList(
-                    index,
-                    Math.min(index + batchSize, comunnes.size())
-            );
-
-            for (Comunne comunne : batch) {
-                try {
-                    AirPollutionDTO data = airPollutionApiClient.fetchHistoricalAirQuality(
-                            comunne.getLan(),
-                            comunne.getLon(),
-                            finalLastFetchTime,
-                            now
-                    );
-                    saveAirData(comunne, data);
-                } catch (Exception e) {
-                    System.out.println("Error fetching data for commune " + comunne.getName() + ": " + e.getMessage());
+        try {
+            scheduler.scheduleAtFixedRate(() -> {
+                int index = currentIndex.get();
+                if (index >= comunnes.size()) {
+                    scheduler.shutdown();
+                    System.out.println("Fetching data is done.");
+                    return;
                 }
-            }
 
-            currentIndex.addAndGet(batchSize);
-        }, 0, 1, TimeUnit.MINUTES);
+                List<Comunne> batch = comunnes.subList(
+                        index,
+                        Math.min(index + batchSize, comunnes.size())
+                );
+
+                for (Comunne comunne : batch) {
+                    try {
+                        AirPollutionDTO data = airPollutionApiClient.fetchHistoricalAirQuality(
+                                comunne.getLan(),
+                                comunne.getLon(),
+                                finalLastFetchTime,
+                                now
+                        );
+                        saveAirData(comunne, data);
+                    } catch (Exception e) {
+                        System.out.println("Error fetching data for commune " + comunne.getName() + ": " + e.getMessage());
+                    }
+                }
+
+                currentIndex.addAndGet(batchSize);
+            }, 0, 1, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
 
-    private void saveAirData(Comunne comunne, AirPollutionDTO data){
-        if(data == null || data.getList() == null || comunne == null) return;
-        for(AirPollutionDTO.ListItem item : data.getList()){
+    private void saveAirData(Comunne comunne, AirPollutionDTO data) {
+        if (data == null || data.getList() == null || comunne == null) return;
+        for (AirPollutionDTO.ListItem item : data.getList()) {
             LocalDateTime localDateTime = LocalDateTime.ofEpochSecond(item.getDt(), 0, ZoneOffset.UTC);
 
             AirPollution airPollution = new AirPollution();
@@ -191,13 +195,13 @@ public class AirPollutionService {
         }
     }
 
-    private List<HourlyAverageAirPollutionDTO> calculateDateByDistrictOrVoivodeship(String voivodeship, String district, LocalDateTime dateFrom, LocalDateTime dateTo){
-        if(voivodeship.equals("") && district.equals("")) return null;
+    private List<HourlyAverageAirPollutionDTO> calculateDateByDistrictOrVoivodeship(String voivodeship, String district, LocalDateTime dateFrom, LocalDateTime dateTo) {
+        if (voivodeship.equals("") && district.equals("")) return null;
 
         List<HourlyAverageAirPollutionDTO> results;
-        if(district.equals("")){
+        if (district.equals("")) {
             results = airPollutionRepository.findAverageAirPollutionByVoivodeshipAndDateRange(voivodeship, dateFrom, dateTo);
-        }else{
+        } else {
             results = airPollutionRepository.findAverageAirPollutionByDistrictAndDateRange(district, dateFrom, dateTo);
             System.out.println(results);
         }

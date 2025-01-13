@@ -220,17 +220,49 @@ public class SurveyService {
         surveyRepository.deleteById(surveyId);
     }
 
-    public SurveyResultsDTO getSurveyResultsById(Long surveyId) throws Exception{
+    public SurveyResultsDTO getSurveyResultsById(Long surveyId,
+                                                 String startDateString,
+                                                 String endDateString,
+                                                 String voivodeship,
+                                                 String district,
+                                                 String comunne) throws Exception{
         Optional<Survey> surveyOptional = surveyRepository.findById(surveyId);
         if(surveyOptional.isEmpty()) throw new Exception("Not found survey");
         Survey survey = surveyOptional.get();
 
+        //date filters
+        LocalDateTime startDate = LocalDateTime.of(2024,10,1,0,0);
+        LocalDateTime endDate = LocalDateTime.now();
+        try{
+            if(!startDateString.equals("")) startDate = LocalDateTime.parse(startDateString);
+            if(!endDateString.equals("")) endDate = LocalDateTime.parse(endDateString);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+        }
+
+
         SurveyResultsDTO results = new SurveyResultsDTO();
         results.setSurveyId(surveyId);
         results.setTitle(survey.getTitle());
-        results.setCompleteCount(surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.COMPLETE));
-        Long sentCount = surveyLogRepository.countAllBySurvey_IdAndStatus(surveyId, SurveyStatus.SENT) + results.getCompleteCount();
-        results.setSentCount(sentCount);
+
+        long surveyCompleteCount;
+        long surveySentCount;
+        if(!comunne.equals("")){
+            surveyCompleteCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_Comunne_Name(surveyId, SurveyStatus.COMPLETE, startDate.toLocalDate(), endDate.toLocalDate(), comunne);
+            surveySentCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_Comunne_Name(surveyId, SurveyStatus.SENT, startDate.toLocalDate(), endDate.toLocalDate(), comunne) + surveyCompleteCount;
+        }else if(!district.equals("")){
+            surveyCompleteCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_District_Name(surveyId, SurveyStatus.COMPLETE, startDate.toLocalDate(), endDate.toLocalDate(), district);
+            surveySentCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_District_Name(surveyId, SurveyStatus.SENT, startDate.toLocalDate(), endDate.toLocalDate(), district) + surveyCompleteCount;
+        }else if(!voivodeship.equals("")){
+            surveyCompleteCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_Voivodeship_Name(surveyId, SurveyStatus.COMPLETE, startDate.toLocalDate(), endDate.toLocalDate(), voivodeship);
+            surveySentCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_Voivodeship_Name(surveyId, SurveyStatus.SENT, startDate.toLocalDate(), endDate.toLocalDate(), voivodeship) + surveyCompleteCount;
+        } else{
+            surveyCompleteCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetween(surveyId, SurveyStatus.COMPLETE, startDate.toLocalDate(), endDate.toLocalDate());
+            surveySentCount = surveyLogRepository.countAllBySurvey_IdAndStatusAndSendAtBetween(surveyId, SurveyStatus.SENT, startDate.toLocalDate(), endDate.toLocalDate()) + surveyCompleteCount;
+        }
+        results.setCompleteCount(surveyCompleteCount);
+        results.setSentCount(surveySentCount);
+
         results.setQuestions(new ArrayList<>());
 
         List<Question> questions = questionRepository.findAllBySurvey(survey);
@@ -241,7 +273,36 @@ public class SurveyService {
             questionItem.setResults(new ArrayList<>());
 
             if(question.getQuestionType().equals(QuestionType.TEXT)){
-                List<Answer> answers = answerRepository.findAllByQuestion(question);
+                List<Answer> answers;
+                if(!comunne.equals("")){
+                    answers = answerRepository.findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Comunne_Name(
+                            question,
+                            startDate,
+                            endDate,
+                            comunne
+                    );
+                }else if(!district.equals("")){
+                    answers = answerRepository.findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_District_Name(
+                            question,
+                            startDate,
+                            endDate,
+                            comunne
+                    );
+                }else if(!voivodeship.equals("")){
+                    answers = answerRepository.findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Voivodeship_Name(
+                            question,
+                            startDate,
+                            endDate,
+                            comunne
+                    );
+                } else{
+                    answers = answerRepository.findAllByQuestionAndSurveyResponse_CreatedAtBetween(
+                            question,
+                            startDate,
+                            endDate
+                    );
+                }
+
                 for(Answer answer : answers){
                     SurveyResultsDTO.AnswerResultDTO answerItem = new SurveyResultsDTO.AnswerResultDTO();
                     answerItem.setAnswer(answer.getAnswer());
@@ -253,8 +314,38 @@ public class SurveyService {
                 for(AnswerOption answerOption : question.getAnswerOptions()){
                     SurveyResultsDTO.AnswerResultDTO answerItem = new SurveyResultsDTO.AnswerResultDTO();
                     answerItem.setAnswer(answerOption.getAnswer());
-                    answerItem.setCount(answerRepository.countAllByQuestionAndAnswerOption(question, answerOption));
-
+                    if(!comunne.equals("")){
+                        answerItem.setCount(answerRepository.countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Comunne_Name(
+                                question,
+                                answerOption,
+                                startDate,
+                                endDate,
+                                comunne)
+                        );
+                    }else if(!district.equals("")){
+                        answerItem.setCount(answerRepository.countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_District_Name(
+                                question,
+                                answerOption,
+                                startDate,
+                                endDate,
+                                district)
+                        );
+                    }else if(!voivodeship.equals("")){
+                        answerItem.setCount(answerRepository.countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Voivodeship_Name(
+                                question,
+                                answerOption,
+                                startDate,
+                                endDate,
+                                voivodeship)
+                        );
+                    } else{
+                        answerItem.setCount(answerRepository.countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetween(
+                                question,
+                                answerOption,
+                                startDate,
+                                endDate)
+                        );
+                    }
                     questionItem.getResults().add(answerItem);
                 }
             }

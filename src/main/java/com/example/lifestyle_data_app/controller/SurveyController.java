@@ -110,9 +110,14 @@ public class SurveyController {
     }
 
     @GetMapping("/results/{surveyId}")
-    public ResponseEntity<SurveyResultsDTO> getSurveyResults(@PathVariable Long surveyId){
+    public ResponseEntity<SurveyResultsDTO> getSurveyResults(@PathVariable Long surveyId,
+                                                             @RequestParam(defaultValue = "") String voivodeship,
+                                                             @RequestParam(defaultValue = "") String district,
+                                                             @RequestParam(defaultValue = "") String comunne,
+                                                             @RequestParam(defaultValue = "") String dateFrom,
+                                                             @RequestParam(defaultValue = "") String dateTo){
         try{
-            return new ResponseEntity<>(surveyService.getSurveyResultsById(surveyId), HttpStatus.OK);
+            return new ResponseEntity<>(surveyService.getSurveyResultsById(surveyId,dateFrom,dateTo,voivodeship, district, comunne), HttpStatus.OK);
         }catch(Exception e){
             System.out.println(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

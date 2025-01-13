@@ -14,8 +14,18 @@ import java.util.List;
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
     List<Answer> findAllBySurveyResponse_Id(Long id);
     void removeAllBySurveyResponse_SurveyLog_Survey_Id(Long surveyId);
-    long countAllByQuestionAndAnswerOption(Question question, AnswerOption option);
-    List<Answer> findAllByQuestion(Question question);
+    long countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetween(Question question, AnswerOption option, LocalDateTime startDate, LocalDateTime endDate);
+    long countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Voivodeship_Name(Question question, AnswerOption option, LocalDateTime startDate, LocalDateTime endDate, String voivodeship);
+    long countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_District_Name(Question question, AnswerOption option, LocalDateTime startDate, LocalDateTime endDate, String district);
+    long countAllByQuestionAndAnswerOptionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Comunne_Name(Question question, AnswerOption option, LocalDateTime startDate, LocalDateTime endDate, String comunne);
+
+    List<Answer> findAllByQuestionAndSurveyResponse_CreatedAtBetween(Question question, LocalDateTime startDate, LocalDateTime endDate);
+    List<Answer> findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Voivodeship_Name(Question question, LocalDateTime startDate, LocalDateTime endDate, String voivodeship);
+
+    List<Answer> findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_District_Name(Question question, LocalDateTime startDate, LocalDateTime endDate, String district);
+
+    List<Answer> findAllByQuestionAndSurveyResponse_CreatedAtBetweenAndSurveyResponse_User_Address_Comunne_Name(Question question, LocalDateTime startDate, LocalDateTime endDate, String comunne);
+
     void removeAllBySurveyResponse_User(User user);
     void removeAllBySurveyResponse_CreatedAtBetweenAndSurveyResponse_SurveyLog_Survey_Id(LocalDateTime dateStart, LocalDateTime dateEnd, Long surveyId);
 }

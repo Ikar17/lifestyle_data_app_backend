@@ -19,7 +19,11 @@ public interface SurveyLogRepository extends JpaRepository<SurveyLog, Long> {
     Page<SurveyLog> findAllByUserAndSendAtBefore(User user, LocalDate date, Pageable pageable);
     List<SurveyLog> findAllBySurvey_Id(Long surveyId);
     void removeAllBySurvey_Id(Long surveyId);
-    long countAllBySurvey_IdAndStatus(Long surveyId, SurveyStatus status);
+    long countAllBySurvey_IdAndStatusAndSendAtBetween(Long surveyId, SurveyStatus status, LocalDate startDate, LocalDate endDate);
+    long countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_Voivodeship_Name(Long surveyId, SurveyStatus status, LocalDate startDate, LocalDate endDate, String voivodeship);
+    long countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_District_Name(Long surveyId, SurveyStatus status, LocalDate startDate, LocalDate endDate, String district);
+    long countAllBySurvey_IdAndStatusAndSendAtBetweenAndUser_Address_Comunne_Name(Long surveyId, SurveyStatus status, LocalDate startDate, LocalDate endDate, String comunne);
+
     void removeAllByUser(User user);
     @Query("SELECT new com.example.lifestyle_data_app.dto.SurveySendingStatsDTO(sl.survey.id, sl.sendAt, COUNT(sl)) " +
             "FROM SurveyLog sl " +
