@@ -79,7 +79,9 @@ public class AuthService {
             ){
                 Address address = addressService.addAddress(userData.getVoivodeship(), userData.getDistrict(), userData.getComunne());
                 user.setAddress(address);
+
             }
+            userRepository.save(user);
             return true;
         }catch(Exception e){
             return false;
